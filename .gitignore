@@ -1,0 +1,51 @@
+# Node modules
+node_modules/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# TypeScript / build artifacts
+dist/
+build/
+lib/
+out/
+*.tsbuildinfo
+
+# Environment files (may contain secrets)
+.env
+.env.*.local
+
+# Editor directories and system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Sensitive project files and credentials
+# - ignore JSON credential/state files that live in auth/ (multiple copies exist)
+Bot/auth/*.json
+**/auth/*.json
+
+# Specific sensitive filenames sometimes present in workspace
+**/creds.json
+**/device-list-*.json
+**/lid-mapping*-reverse.json
+**/lid-mapping*.json
+**/app-state-sync-key-*.json
+**/app-state-sync-version-*.json
+
+# Saved game / binary state files (project-specific)
+*.ser
+*.save
+
+# Misc — ignore local build artifacts and OS/temp files
+*.tmp
+*.swp
+tmp/
+temp/
+
+# If you add other sensitive files, add them here (one per line)
