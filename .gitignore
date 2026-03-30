@@ -49,3 +49,6 @@ tmp/
 temp/
 
 # If you add other sensitive files, add them here (one per line)
+node_modules/
+auth/
+.env   

@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import makeWASocket, {
   Browsers,
   useMultiFileAuthState,
@@ -12,13 +13,13 @@ import { FormattedMessage, getMessage } from "./utils/message";
 import MessageHandler from "./handlers/message";
 
 
-const CONNECTION_TYPE = "QR";
-const PHONE_NUMBER = "5584981881549";
+const CONNECTION_TYPE = process.env.CONNECTION_TYPE || "QR";
+const PHONE_NUMBER = process.env.PHONE_NUMBER || "";
 const USE_LASTEST_VERSION = true;
 
 let retryCount = 0;
-const MAX_RETRIES = 5;
-const RETRY_INTERVAL = 5000; // 5 segundos
+const MAX_RETRIES = parseInt(process.env.MAX_RETRIES || "5");
+const RETRY_INTERVAL = parseInt(process.env.RETRY_INTERVAL || "5000");
 
 const startBot = async () => {
   try {

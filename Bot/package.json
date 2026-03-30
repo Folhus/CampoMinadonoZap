@@ -22,6 +22,7 @@
     "@types/qrcode-terminal": "^0.12.2",
     "baileys": "^7.0.0-rc.6",
     "boom": "^7.3.0",
+    "dotenv": "^17.3.1",
     "jsonfile": "^6.2.0",
     "logger": "^0.0.1",
     "pino": "^10.1.0",
