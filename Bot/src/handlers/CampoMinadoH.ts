@@ -1,5 +1,4 @@
-import { exec } from 'child_process';
-import { promisify } from 'util';
+import 'dotenv/config';
 import { readFile } from 'fs/promises';
 
 const jsonfile = require('jsonfile');
@@ -7,30 +6,43 @@ const file = '/tmp/data.json';
 const writeFile = require('jsonfile').writeFile;
 
 export class CampoMinadoH {
-    private javaPath: string;
     private baseImagePath: string;
-    private pontePath: string;
+    private requestPath: string;
+    private responsePath: string;
     private games: Map<string, string> = new Map(); // Mapa para guardar jogos por chat/grupo
 
     constructor() {
-        this.javaPath = 'C:/Users/wilto/Desktop/Programa/Projeto/CampoMinadonoZap/CampoMinado/bin';
-        this.baseImagePath = 'C:/Users/wilto/Desktop/Programa/Projetos/CampoMinadonoZap/CampoMinado/midia';
-        this.pontePath = 'C:/Users/wilto/Desktop/Programa/Projetos/CampoMinadonoZap/CampoMinado/ponte.json'
+        this.baseImagePath = process.env.BASE_IMAGE_PATH || '';
+        this.requestPath = process.env.REQUEST_PATH || '';
+        this.responsePath = process.env.RESPONSE_PATH || '';
     }
 
     private getImagePath(chatId: string): string {
-        const safeId = chatId.replace(/[^a-zA-Z0-9]/g, '_');
-        return `${this.baseImagePath}/campo.png`;
+        return `${this.baseImagePath}/${chatId}.png`;
+    }
+
+    private writeRequest(chatId: string, comando: string, coords: string[]) {
+        // Cria objeto com os elementos já preenchidos
+        const obj = `{
+                "lido": false,
+                "jogo": ${chatId},
+                "comando": {
+                    "id": ${comando},
+                    "coordenadas": ${coords}
+                }
+            }`;
+        // Reescreve request.json com o objeto obj
+        jsonfile.writeFileSync(this.requestPath, obj)
+
+        // Aguarda um momento para garantir que a imagem foi gerada
+        new Promise(resolve => setTimeout(resolve, 1000));
     }
 
     async novoJogo(chatId: string): Promise<{ success: boolean; message: string; imagePath?: string }> {
         try {
             const imagePath = this.getImagePath(chatId);
-            const obj = { 'comando': ['novo']};
-            jsonfile.writeFile(this.pontePath, obj);
 
-            // Aguarda um momento para garantir que a imagem foi gerada
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            this.writeRequest(chatId, "novo", [""]);
 
             // Guarda o jogo atual para este chat
             this.games.set(chatId, imagePath);
@@ -53,7 +65,7 @@ export class CampoMinadoH {
         // Separa múltiplas coordenadas por espaço e/ou vírgula
         console.log(jogada);
         const coordenadas = jogada.trim().split(/[\s,]+/).filter(c => c.length > 0);
-        const comando: string[] = ['jogar'];
+        const comando: string[] = [''];
         console.log(coordenadas);
 
         let i = 1;
@@ -66,12 +78,12 @@ export class CampoMinadoH {
                     message: "Formato invalido! Use letra (A-N) e numero (1-14)\nExemplo: A1, B3, M14"
                 };
             }
-            while(i < coord.length){
-                if(i%2 == 0){
-                    temp = coord[i-1].toUpperCase() + coord[i];
+            while (i < coord.length) {
+                if (i % 2 == 0) {
+                    temp = coord[i - 1].toUpperCase() + coord[i];
                     comando.push(temp);
                     console.log(temp);
-                } 
+                }
                 i++;
                 console.log(match[i]);
             }
@@ -87,12 +99,11 @@ export class CampoMinadoH {
         }
 
         try {
-            const obj = { 'comando': comando };
-            jsonfile.writeFileSync(this.pontePath, obj)
+            this.writeRequest(chatId, "jogar", comando);
 
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            const status = jsonfile.readFile(this.responsePath).status;
 
-            if (jsonfile.readFile(this.pontePath).Comando == "GAMEOVER") {
+            if (status == "GAMEOVER") {
                 // Remove o jogo quando termina
                 this.games.delete(chatId);
                 return {
@@ -100,7 +111,7 @@ export class CampoMinadoH {
                     message: "GAME OVER! Voce atingiu uma mina!\nUse !novo para jogar novamente",
                     imagePath: imagePath
                 };
-            } else if (jsonfile.readFile(this.pontePath).Comando == "VITORIA") {
+            } else if (status == "VITORIA") {
                 // Remove o jogo quando vence
                 this.games.delete(chatId);
                 return {
@@ -108,13 +119,13 @@ export class CampoMinadoH {
                     message: "PARABENS! Voce venceu o Campo Minado!\nUse !novo para jogar novamente",
                     imagePath: imagePath
                 };
-            } else if (jsonfile.readFile(this.pontePath).Comando == "JOGADA_REALIZADA") {
+            } else if (status == "JOGADA_REALIZADA") {
                 return {
                     success: true,
                     message: `Jogadas realizadas!\nContinue jogando...`,
                     imagePath: imagePath
                 };
-            } else if (jsonfile.readFile(this.pontePath).Comando == "JOGADA_INVALIDA") {
+            } else if (status == "JOGADA_INVALIDA") {
                 return {
                     success: false,
                     message: "Jogada invalida!\nCelula ja revelada ou com bandeira."
@@ -136,38 +147,46 @@ export class CampoMinadoH {
 
 
     async toggleBandeira(chatId: string, jogada: string): Promise<{ success: boolean; message: string; imagePath?: string }> {
-        const match = jogada.match(/^([A-Z])(\d+)$/i);
-        if (!match) {
-            return {
-                success: false,
-                message: "Formato invalido! Use letra (A-N) e numero (1-14)\nExemplo: A1, B3, M14"
-            };
-        }
+        console.log(jogada);
+        const coordenadas = jogada.trim().split(/[\s,]+/).filter(c => c.length > 0);
+        const comando: string[] = [''];
+        console.log(coordenadas);
 
-        const linha = match[1].toUpperCase();
-        const coluna = match[2];
-
-        if (linha < 'A' || linha > 'N' || parseInt(coluna) < 1 || parseInt(coluna) > 14) {
-            return {
-                success: false,
-                message: "Coordenada fora do campo!\nLinhas: A ate N\nColunas: 1 ate 14"
-            };
-        }
-
-        try {
-            // Verifica se existe um jogo ativo para este chat
-            const imagePath = this.games.get(chatId);
-            if (!imagePath) {
+        let i = 1;
+        let temp = "";
+        for (const coord of coordenadas) {
+            const match = coord.match(/^([A-N])(\d+)$/i);
+            if (!match) {
                 return {
                     success: false,
-                    message: "Nenhum jogo ativo! Use !novo para iniciar um jogo."
+                    message: "Formato invalido! Use letra (A-N) e numero (1-14)\nExemplo: A1, B3, M14"
                 };
             }
+            while (i < coord.length) {
+                if (i % 2 == 0) {
+                    temp = coord[i - 1].toUpperCase() + coord[i];
+                    comando.push(temp);
+                    console.log(temp);
+                }
+                i++;
+                console.log(match[i]);
+            }
+        }
 
-            const obj = { 'Comando': ['jogar', match] };
-            jsonfile.writeFileSync(this.pontePath, obj);
+        // Verifica se existe um jogo ativo para este chat
+        const imagePath = this.games.get(chatId);
+        if (!imagePath) {
+            return {
+                success: false,
+                message: "Nenhum jogo ativo! Use !novo para iniciar um jogo."
+            };
+        }
 
-            if (jsonfile.readFile(this.pontePath).Comando == "BANDEIRA_ALTERADA") {
+
+        try {
+            this.writeRequest(chatId, "bandeira", comando);
+
+            if (jsonfile.readFile(this.responsePath).status == "BANDEIRA_ALTERADA") {
                 return {
                     success: true,
                     message: `Bandeira colocada/removida!`,
@@ -207,23 +226,23 @@ export class CampoMinadoH {
                 };
             }
 
-            const obj = { 'Comando': ['status'] };
-            jsonfile.writeFile(this.pontePath, obj);
+            this.writeRequest(chatId, "status", [""]);
 
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            if (jsonfile.readFile(this.pontePath).Comando == "STATUS_GAME_OVER") {
+            const status = jsonfile.readFile(this.responsePath).status;
+
+            if (status == "STATUS_GAME_OVER") {
                 return {
                     success: true,
                     message: "GAME OVER\nUse !novo para jogar novamente",
                     imagePath
                 };
-            } else if (jsonfile.readFile(this.pontePath).Comando == "STATUS_VITORIA") {
+            } else if (status == "STATUS_VITORIA") {
                 return {
                     success: true,
                     message: "VITORIA!\nUse !novo para jogar novamente",
                     imagePath
                 };
-            } else if (jsonfile.readFile(this.pontePath).Comando == "STATUS_EM_ANDAMENTO") {
+            } else if (status == "STATUS_EM_ANDAMENTO") {
                 return {
                     success: true,
                     message: "JOGO EM ANDAMENTO\nContinue jogando!",

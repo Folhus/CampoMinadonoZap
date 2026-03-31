@@ -172,7 +172,7 @@ const RETRY_INTERVAL = 5000;          // intervalo entre tentativas (ms)
 
 ## Melhorias futuras
 
-- [ ] Usar variáveis de ambiente (`dotenv`) para os caminhos
+- [X] Usar variáveis de ambiente (`dotenv`) para os caminhos
 - [ ] Suporte a múltiplos jogos simultâneos por grupo/chat
 - [ ] Dificuldades configuráveis (campo e número de minas)
 - [ ] Placar e histórico de partidas

@@ -51,4 +51,17 @@ temp/
 # If you add other sensitive files, add them here (one per line)
 node_modules/
 auth/
-.env   
+.env
+
+# Ignore request.json / response.json files (sensitive), but do NOT ignore example files.
+# We ignore these filenames anywhere in the repo but re-allow filenames that include
+# "example" or "Exemplo" so example/sample files remain versioned.
+**/request.json
+**/response.json
+!**/*example*.json
+!**/*Example*.json
+!**/*Exemplo*.json
+
+# NOTE: avoid ignoring whole directories like `CampoMinado/` to prevent accidentally
+# hiding example files or documentation. If you intentionally want to ignore a full
+# directory, add an explicit rule and keep example negations afterwards.
