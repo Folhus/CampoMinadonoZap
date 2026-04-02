@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import { readFile } from 'fs/promises';
+import { writeFileSync } from 'fs';
 
 const jsonfile = require('jsonfile');
 const file = '/tmp/data.json';
@@ -19,20 +20,20 @@ export class CampoMinadoH {
 
     private getImagePath(chatId: string): string {
         return `${this.baseImagePath}/${chatId}.png`;
-    }
+    }  
 
     private writeRequest(chatId: string, comando: string, coords: string[]) {
         // Cria objeto com os elementos já preenchidos
-        const obj = `{
-                "lido": false,
-                "jogo": ${chatId},
-                "comando": {
-                    "id": ${comando},
-                    "coordenadas": ${coords}
-                }
-            }`;
+        const obj = {
+            lido: false,
+            jogo: chatId,
+            comando: {
+                id: comando,
+                coordenadas: coords
+            }
+        };
         // Reescreve request.json com o objeto obj
-        jsonfile.writeFileSync(this.requestPath, obj)
+        writeFileSync(this.requestPath, JSON.stringify(obj, null, 4));
 
         // Aguarda um momento para garantir que a imagem foi gerada
         new Promise(resolve => setTimeout(resolve, 1000));
@@ -63,13 +64,11 @@ export class CampoMinadoH {
 
     async fazerJogada(chatId: string, jogada: string): Promise<{ success: boolean; message: string; imagePath?: string }> {
         // Separa múltiplas coordenadas por espaço e/ou vírgula
-        console.log(jogada);
+        console.log("jogada recebida:", JSON.stringify(jogada)); // ← adicione isso
         const coordenadas = jogada.trim().split(/[\s,]+/).filter(c => c.length > 0);
-        const comando: string[] = [''];
-        console.log(coordenadas);
+        console.log("coordenadas split:", coordenadas); // ← e isso
+        const comando: string[] = [];  // ← sem o [''] inicial
 
-        let i = 1;
-        let temp = "";
         for (const coord of coordenadas) {
             const match = coord.match(/^([A-N])(\d+)$/i);
             if (!match) {
@@ -78,15 +77,7 @@ export class CampoMinadoH {
                     message: "Formato invalido! Use letra (A-N) e numero (1-14)\nExemplo: A1, B3, M14"
                 };
             }
-            while (i < coord.length) {
-                if (i % 2 == 0) {
-                    temp = coord[i - 1].toUpperCase() + coord[i];
-                    comando.push(temp);
-                    console.log(temp);
-                }
-                i++;
-                console.log(match[i]);
-            }
+            comando.push(match[1].toUpperCase() + match[2]);
         }
 
         // Verifica se existe um jogo ativo para este chat
@@ -149,11 +140,8 @@ export class CampoMinadoH {
     async toggleBandeira(chatId: string, jogada: string): Promise<{ success: boolean; message: string; imagePath?: string }> {
         console.log(jogada);
         const coordenadas = jogada.trim().split(/[\s,]+/).filter(c => c.length > 0);
-        const comando: string[] = [''];
-        console.log(coordenadas);
+        const comando: string[] = []; // ← sem [''] e sem while
 
-        let i = 1;
-        let temp = "";
         for (const coord of coordenadas) {
             const match = coord.match(/^([A-N])(\d+)$/i);
             if (!match) {
@@ -162,15 +150,7 @@ export class CampoMinadoH {
                     message: "Formato invalido! Use letra (A-N) e numero (1-14)\nExemplo: A1, B3, M14"
                 };
             }
-            while (i < coord.length) {
-                if (i % 2 == 0) {
-                    temp = coord[i - 1].toUpperCase() + coord[i];
-                    comando.push(temp);
-                    console.log(temp);
-                }
-                i++;
-                console.log(match[i]);
-            }
+            comando.push(match[1].toUpperCase() + match[2]);
         }
 
         // Verifica se existe um jogo ativo para este chat

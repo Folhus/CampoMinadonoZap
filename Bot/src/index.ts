@@ -60,7 +60,7 @@ export const initWASocket = async (): Promise<void> => {
           : Browsers.appropriate("Desktop"),
       printQRInTerminal: false,
       version: USE_LASTEST_VERSION ? version : undefined,
-      defaultQueryTimeoutMs: 60000, // Aumentado para 60 segundos
+      defaultQueryTimeoutMs: 60000, // 60 segundos
       getMessage: async (key) => {
         return { conversation: 'retry' }
       },
@@ -128,7 +128,7 @@ export const initWASocket = async (): Promise<void> => {
       }
 
       if (qr !== undefined && CONNECTION_TYPE === "QR") {
-        logger.info("Novo código QR gerado");
+        logger.info("Novo codigo QR gerado");
         qrcode.generate(qr, { small: true });
       }
     }
@@ -145,6 +145,8 @@ export const initWASocket = async (): Promise<void> => {
 
       // Ignora comunidades
       if (message.key.remoteJid.endsWith("@g.us") && message.key.remoteJid.includes("--")) continue;
+
+      if (message.key.remoteJid.endsWith("@newsletter")) continue;
 
       // Processa apenas mensagens que tenham conteúdo relevante
       const formattedMessage: FormattedMessage | undefined = getMessage(message);

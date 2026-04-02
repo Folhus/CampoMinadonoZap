@@ -1,0 +1,8 @@
+{
+    "lido": false,
+    "jogo": "chatId",
+"comando": { 
+    "id": "jogar",
+    "coordenadas": ["a1", "b2"]
+}
+}

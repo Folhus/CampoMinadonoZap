@@ -1,8 +1,70 @@
 import { CampoMinadoH } from './CampoMinadoH';
 import { FormattedMessage } from '../utils/message';
 import { proto } from 'baileys';
+import { readFile } from 'fs/promises';
+import { existsSync, statSync } from 'fs';
+import 'dotenv/config';
+const jsonfile = require('jsonfile');
 
 const campoMinadoH = new CampoMinadoH();
+
+/**
+ * Health check para o request path
+ * Verifica se o arquivo é acessível e pode ser lido/escrito
+ * @returns true se o path está saudável, false caso contrário
+ */
+function isRequestPathHealthy(): boolean {
+    try {
+        const requestPath = process.env.REQUEST_PATH;
+        
+        // Validação básica: caminho não pode estar vazio
+        if (!requestPath || requestPath.trim() === '') {
+            console.error('REQUEST_PATH vazio ou não definido em .env');
+            return false;
+        }
+
+        // Validação 1: Arquivo existe?
+        if (!existsSync(requestPath)) {
+            console.error(`REQUEST_PATH não encontrado: ${requestPath}`);
+            return false;
+        }
+
+        // Validação 2: É um arquivo (não diretório)?
+        const stat = statSync(requestPath);
+        if (!stat.isFile()) {
+            console.error(`REQUEST_PATH não é um arquivo válido: ${requestPath}`);
+            return false;
+        }
+
+        const lido = jsonfile.readFile(requestPath).lido;
+        for (let i = 0; lido==false && i <= 20; i++) {
+            new Promise(resolve => setTimeout(resolve, 100));
+        }
+        if (lido==false) {
+            console.error('CampoMinado desligado ou em manutenção');
+            return false;
+        }
+
+        // Validação 3: Tenta ler o arquivo (teste de leitura)
+        try {
+            const data = jsonfile.readFileSync(requestPath);
+            if (!data) {
+                console.warn('REQUEST_PATH existe mas está vazio ou inválido');
+                return false;
+            }
+        } catch (readError: any) {
+            console.error(`Erro ao ler REQUEST_PATH: ${readError.message}`);
+            return false;
+        }
+
+        // Todos os testes passaram
+        console.log(`REQUEST_PATH está saudável: ${requestPath}`);
+        return true;
+    } catch (error: any) {
+        console.error(`Erro crítico no health check: ${error.message}`);
+        return false;
+    }
+}
 
 const MessageHandler = async (sock: any, message: FormattedMessage): Promise<void> => {
     const content = message.content?.toLowerCase() || '';
@@ -23,6 +85,22 @@ const MessageHandler = async (sock: any, message: FormattedMessage): Promise<voi
 
     // Se não for um comando do jogo, ignora a mensagem
     if (!content.startsWith('!')) return;
+
+    // Health check: verifica se o requestPath está acessível antes de processar
+    if (!isRequestPathHealthy()) {
+        console.error('Sistema de ponte indisponível - ignorando comando');
+        await sock.sendMessage(remoteJid, {
+            text: "Sistema indisponível no momento. Tente novamente mais tarde."
+        });
+        return;
+    }
+
+    await handleCampoMinado(sock, remoteJid, content);
+};
+
+
+// Tudo relacionado ao campoMinado
+async function handleCampoMinado(sock: any, remoteJid: string, content: string) {
 
     try {
         // Comandos do Campo Minado
@@ -53,7 +131,7 @@ const MessageHandler = async (sock: any, message: FormattedMessage): Promise<voi
             text: "Ocorreu um erro ao processar seu comando."
         });
     }
-};
+}
 
 async function handleNovoJogo(sock: any, remoteJid: string) {
     const result = await campoMinadoH.novoJogo(remoteJid);
@@ -85,7 +163,7 @@ async function handleNovoJogo(sock: any, remoteJid: string) {
 }
 
 async function handleJogar(sock: any, remoteJid: string, content: string) {
-    const args = content.split(' ');
+    const args = content.split(' ').slice(1).join(' ');
 
     if (args.length < 2) {
         await sock.sendMessage(remoteJid, {
@@ -94,14 +172,14 @@ async function handleJogar(sock: any, remoteJid: string, content: string) {
         return;
     }
 
-    const jogada = args[1].toUpperCase();
+    const jogada = args.toUpperCase();
     const result = await campoMinadoH.fazerJogada(remoteJid, jogada);
 
     await sendGameResponse(sock, remoteJid, result);
 }
 
 async function handleBandeira(sock: any, remoteJid: string, content: string) {
-    const args = content.split(' ');
+    const args = content.split(' ').slice(1).join(' ');
 
     if (args.length < 2) {
         await sock.sendMessage(remoteJid, {
@@ -110,7 +188,7 @@ async function handleBandeira(sock: any, remoteJid: string, content: string) {
         return;
     }
 
-    const jogada = args[1].toUpperCase();
+    const jogada = args.toUpperCase();
     const result = await campoMinadoH.toggleBandeira(remoteJid, jogada);
 
     await sendGameResponse(sock, remoteJid, result);
