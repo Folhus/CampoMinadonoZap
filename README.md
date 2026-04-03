@@ -18,7 +18,8 @@ CampoMinadonoZap/
 │   ├── fontes/
 │   │   └── static/
 │   │       └── NotoEmoji-Bold.ttf
-│   └── ponte.json             # Arquivo de comunicação entre Java e Node
+│   └── request.json
+│   └── response.json             # Arquivos de comunicação entre Java e Node
 │
 └── BotWhatsApp/               # Frontend Node.js (bot WhatsApp)
     ├── src/
@@ -107,7 +108,7 @@ java -cp "bin;gson.jar" Jogo
 ### 4. Configurar o bot Node.js
 
 ```bash
-cd ../BotWhatsApp
+cd ../bot
 npm install
 ```
 
@@ -116,7 +117,8 @@ Antes de iniciar, ajuste os caminhos absolutos em `src/handlers/CampoMinadoH.ts`
 ```typescript
 this.javaPath = 'CAMINHO/PARA/CampoMinado/bin';
 this.baseImagePath = 'CAMINHO/PARA/CampoMinado/midia';
-this.pontePath = 'CAMINHO/PARA/CampoMinado/ponte.json';
+this.requestPath = 'CAMINHO/PARA/CampoMinado/request.json';
+this.responssPath = 'CAMINHO/PARA/CampoMinado/response.json';
 ```
 
 E em `src/CampoMinado.java`, ajuste o caminho de saída da imagem:
@@ -128,6 +130,7 @@ File outputDir = new File("CAMINHO/PARA/CampoMinado/midia");
 ### 5. Iniciar o bot
 
 ```bash
+cd ../bot
 npm run start:dev
 ```
 
