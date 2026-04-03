@@ -175,11 +175,40 @@ const RETRY_INTERVAL = 5000;          // intervalo entre tentativas (ms)
 
 ## Melhorias futuras
 
-- [X] Usar variáveis de ambiente (`dotenv`) para os caminhos
-- [ ] Suporte a múltiplos jogos simultâneos por grupo/chat
+- [X] Usar variáveis de ambiente (`dotenv`) para os caminhos ✅
+- [X] Suporte a múltiplos jogos simultâneos por grupo/chat ✅
+- [X] BASE_IMAGE_PATH configurável no .env ✅
 - [ ] Dificuldades configuráveis (campo e número de minas)
 - [ ] Placar e histórico de partidas
 - [ ] Substituir a ponte via arquivo por comunicação via stdin/stdout ou socket
+
+---
+
+## 🎉 Atualizações Recentes (Abril 2026)
+
+### Novos Arquivos
+- **GerenciadorJogos.java** - Map<chatId, CampoMinado> para múltiplos jogos simultâneos
+- **ConfigEnv.java** - Carrega variáveis do arquivo .env
+- **ExemploUso.java** - Código de demonstração
+
+### Arquivos Modificados
+- **CampoMinado.java** - Adiciona chatId e gera imagens com nome do chat
+- **Jogo.java** - Integração com GerenciadorJogos e ConfigEnv
+
+### Funcionalidades Implementadas
+✅ Múltiplos jogos simultâneos (cada chat tem seu próprio jogo)  
+✅ Persistência automática em `jogos_ativos.dat`  
+✅ Imagens nomeadas por chatId (ex: `5584981881549.png`)  
+✅ Configuração via `.env` com `BASE_IMAGE_PATH`  
+
+### Exemplo de Uso
+```java
+GerenciadorJogos gerenciador = GerenciadorJogos.getInstance();
+CampoMinado jogo = new CampoMinado();
+jogo.setChatId("5584981881549");
+gerenciador.adicionarJogo("5584981881549", jogo);
+jogo.gerarImagem(); // Gera: /midia/5584981881549.png
+```
 
 ---
 

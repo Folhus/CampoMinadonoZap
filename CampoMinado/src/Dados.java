@@ -1,5 +1,13 @@
 import java.util.List;
 
 public class Dados {
-    public List<String> comando;
+    public Boolean lido;
+    public String jogo;
+    public Comando comando;
+}
+
+
+class Comando {
+    public String id;
+    public List<String> coordenadas;
 }
