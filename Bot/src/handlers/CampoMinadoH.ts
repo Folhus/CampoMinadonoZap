@@ -64,10 +64,10 @@ export class CampoMinadoH {
 
     async fazerJogada(chatId: string, jogada: string): Promise<{ success: boolean; message: string; imagePath?: string }> {
         // Separa múltiplas coordenadas por espaço e/ou vírgula
-        console.log("jogada recebida:", JSON.stringify(jogada)); // ← adicione isso
+        console.log("jogada recebida:", JSON.stringify(jogada));
         const coordenadas = jogada.trim().split(/[\s,]+/).filter(c => c.length > 0);
-        console.log("coordenadas split:", coordenadas); // ← e isso
-        const comando: string[] = [];  // ← sem o [''] inicial
+        console.log("coordenadas split:", coordenadas);
+        const comando: string[] = [];
 
         for (const coord of coordenadas) {
             const match = coord.match(/^([A-N])(\d+)$/i);
@@ -140,7 +140,7 @@ export class CampoMinadoH {
     async toggleBandeira(chatId: string, jogada: string): Promise<{ success: boolean; message: string; imagePath?: string }> {
         console.log(jogada);
         const coordenadas = jogada.trim().split(/[\s,]+/).filter(c => c.length > 0);
-        const comando: string[] = []; // ← sem [''] e sem while
+        const comando: string[] = [];
 
         for (const coord of coordenadas) {
             const match = coord.match(/^([A-N])(\d+)$/i);
