@@ -14,14 +14,14 @@ CampoMinadonoZap/
 │   │   ├── Jogo.java          # Loop principal e ponte JSON
 │   │   └── Dados.java         # Modelo de dados para comunicação
 │   ├── midia/
-│   │   └── campo.png          # Imagem gerada do tabuleiro
+│   │   └── chatId.png          # Imagem gerada do tabuleiro
 │   ├── fontes/
 │   │   └── static/
 │   │       └── NotoEmoji-Bold.ttf
 │   └── request.json
 │   └── response.json             # Arquivos de comunicação entre Java e Node
 │
-└── BotWhatsApp/               # Frontend Node.js (bot WhatsApp)
+└── Bot/               # Frontend Node.js (bot WhatsApp)
     ├── src/
     │   ├── index.ts            # Inicialização do bot (Baileys)
     │   ├── handlers/
@@ -40,12 +40,12 @@ CampoMinadonoZap/
 O projeto usa uma arquitetura de **duas camadas** que se comunicam via arquivo JSON:
 
 ```
-WhatsApp → Baileys (Node.js) → ponte.json → Java (Jogo.java) → ponte.json → Node.js → WhatsApp
+WhatsApp → Baileys (Node.js) → request.json → Java (Jogo.java) → responss.json → Node.js → WhatsApp
 ```
 
 1. O bot Node.js recebe o comando do usuário via WhatsApp
-2. Escreve o comando em `ponte.json`
-3. O processo Java lê o arquivo, executa a jogada e atualiza `ponte.json` com o resultado
+2. Escreve o comando em `request.json`
+3. O processo Java lê o arquivo, executa a jogada e atualiza `response.json` com o resultado
 4. O Java também gera/atualiza a imagem `campo.png` do tabuleiro
 5. O Node.js lê o resultado, carrega a imagem e responde ao usuário
 
