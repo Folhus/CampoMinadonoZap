@@ -21,12 +21,28 @@ public class Jogo {
     }
 
     public Dados dados = new Dados();
+    public Response response = new Response();
 
     private boolean checarAcao() {
         if (Jogo.gi().dados.comando.id.isEmpty() || Jogo.gi().dados.comando==null) {
             return false;
         } else {
             return true;
+        }
+    }
+
+    private void limparResponse (String status) {
+        try {
+            Gson gson = new Gson();
+            Response dadosLimpo = new Response();
+            dadosLimpo.lido = true;
+            dadosLimpo.status = status;
+            
+            FileWriter escritor = new FileWriter("response.json");
+            gson.toJson(dadosLimpo, escritor);
+            escritor.close();
+        } catch (IOException e) {
+            System.err.println("Erro ao limpar response.json: " + e.getMessage());
         }
     }
 
@@ -63,7 +79,7 @@ public class Jogo {
         do {
             try {
                 Jogo.gi().lerJson();
-                Thread.sleep(500);
+                Thread.sleep(100);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -80,6 +96,11 @@ public class Jogo {
                     CampoMinado jogo = new CampoMinado();
                     String chatId = Jogo.gi().dados.jogo;
                     jogo.setChatId(chatId);
+
+                    if (GerenciadorJogos.getInstance().existeJogo(chatId) == true) {
+                        GerenciadorJogos.getInstance().removerJogo(chatId);
+                    }
+
                     GerenciadorJogos.getInstance().adicionarJogo(chatId, jogo);
                     salvarJogo(jogo, "jogo_salvo.ser");
                     System.out.println("Jogo criado para chat: " + chatId);
@@ -101,27 +122,17 @@ public class Jogo {
                                 GerenciadorJogos.getInstance().adicionarJogo(chatIdJogar, jogoCarregado);
                                 salvarJogo(jogoCarregado, "jogo_salvo.ser");
                                 if (jogoCarregado.isGameOver()) {
-                                    GerenciadorJogos.getInstance().removerJogo(chatIdJogar);
-                                    FileWriter escritor = new FileWriter("ponte.json");
-                                    escritor.write("{\n\"comando\": [\n\"GAMEOVER\"\n]\n}");
-                                    escritor.close();
+                                    Jogo.gi().limparResponse("GAMEOVER");
                                 } else if (jogoCarregado.isVitoria()) {
-                                    GerenciadorJogos.getInstance().removerJogo(chatIdJogar);
-                                    FileWriter escritor = new FileWriter("ponte.json");
-                                    escritor.write("{\n\"comando\": [\n\"VITORIA\"\n]\n}");
-                                    escritor.close();
+                                    Jogo.gi().limparResponse("VITORIA");
                                 } else {
-                                    FileWriter escritor = new FileWriter("ponte.json");
-                                    escritor.write("{\n\"comando\": [\n\"JOGADA_REALIZADA\"\n]\n}");
-                                    escritor.close();
+                                    Jogo.gi().limparResponse("JOGADA_REALIZADA");
                                 }
                             } else {
-                                FileWriter escritor = new FileWriter("ponte.json");
-                                escritor.write("{\n\"comando\": [\n\"JOGADA_INVALIDA\"\n]\n}");
-                                escritor.close();
+                                Jogo.gi().limparResponse("JOGADA_INVALIDA");
                             }
                         } else {
-                            System.out.println("Crie um jogo primeiro");
+                            Jogo.gi().limparResponse("JOGO_INEXISTENTE");
                         }
                     }
                     break;
@@ -139,12 +150,13 @@ public class Jogo {
                             boolean sucesso = jogoBandeira.toggleBandeira(LB, CB);
                             GerenciadorJogos.getInstance().adicionarJogo(chatIdBandeira, jogoBandeira);
                             salvarJogo(jogoBandeira, "jogo_salvo.ser");
-                            FileWriter escritor = new FileWriter("ponte.json");
-                            escritor.write(sucesso ? "{\n\"comando\": [\n\"BANDEIRA_ALTERADA\"\n]\n}"
-                                    : "{\n\"comando\": [\n\"BANDEIRA_INVALIDA\"\n]\n}");
-                            escritor.close();
+                            if (!sucesso) {
+                                Jogo.gi().limparResponse("BANDEIRA_INVALIDA");
+                            }else{
+                                Jogo.gi().limparResponse("BANDEIRA_ALTERADA");
+                            }
                         } else {
-                            System.out.println("Crie um jogo primeiro");
+                            Jogo.gi().limparResponse("JOGO_INEXISTENTE");
                         }
                     }
                     break;
@@ -155,22 +167,12 @@ public class Jogo {
                     CampoMinado jogoStatus = GerenciadorJogos.getInstance().obterJogo(chatIdStatus);
                     if (jogoStatus != null) {
                         if (jogoStatus.isGameOver()) {
-                            FileWriter escritor = new FileWriter("response.json");
-                                escritor.write("{\n\"comando\": [\n\"STATUS_GAMER_OVER\"\n]\n}");
-                                escritor.close();
+                            Jogo.gi().limparResponse("STATUS_GAMER_OVER");
                         } else if (jogoStatus.isVitoria()) {
-                            FileWriter escritor = new FileWriter("response.json");
-                                escritor.write("{\n\"comando\": [\n\"STATUS_VITORIA\"\n]\n}");
-                                escritor.close();
+                            Jogo.gi().limparResponse("STATUS_VITORIA");
                         } else {
-                            FileWriter escritor = new FileWriter("response.json");
-                                escritor.write("{\n\"comando\": [\n\"STATUS_EM_ANDAMENTO\"\n]\n}");
-                                escritor.close();
+                            Jogo.gi().limparResponse("STATUS_EM_ANDAMENTO");
                         }
-                    } else {
-                        FileWriter escritor = new FileWriter("response.json");
-                                escritor.write("{\n\"comando\": [\n\"STATUS_SEM_JOGO\"\n]\n}");
-                                escritor.close();
                     }
                     break;
 

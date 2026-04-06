@@ -13,7 +13,7 @@ const campoMinadoH = new CampoMinadoH();
  * Verifica se o arquivo é acessível e pode ser lido/escrito
  * @returns true se o path está saudável, false caso contrário
  */
-function isRequestPathHealthy(): boolean {
+async function isRequestPathHealthy(): Promise<boolean> {
     try {
         const requestPath = process.env.REQUEST_PATH;
         
@@ -36,16 +36,25 @@ function isRequestPathHealthy(): boolean {
             return false;
         }
 
-        const lido = jsonfile.readFile(requestPath).lido;
-        for (let i = 0; lido==false && i <= 20; i++) {
-            new Promise(resolve => setTimeout(resolve, 100));
+        // Validação 3: Verifica se o arquivo foi processado (lido == true)
+        let lido = false;
+        for (let i = 0; i < 20; i++) {
+            try {
+                const data = await jsonfile.readFile(requestPath);
+                lido = data.lido;
+                if (lido) break;
+            } catch (error) {
+                continue;
+            }
+            await new Promise(resolve => setTimeout(resolve, 100));
         }
-        if (lido==false) {
+        
+        if (!lido) {
             console.error('CampoMinado desligado ou em manutenção');
             return false;
         }
 
-        // Validação 3: Tenta ler o arquivo (teste de leitura)
+        // Validação 4: Tenta ler o arquivo (teste de leitura)
         try {
             const data = jsonfile.readFileSync(requestPath);
             if (!data) {
@@ -87,7 +96,7 @@ const MessageHandler = async (sock: any, message: FormattedMessage): Promise<voi
     if (!content.startsWith('!')) return;
 
     // Health check: verifica se o requestPath está acessível antes de processar
-    if (!isRequestPathHealthy()) {
+    if (!await isRequestPathHealthy()) {
         console.error('Sistema de ponte indisponível - ignorando comando');
         await sock.sendMessage(remoteJid, {
             text: "Sistema indisponível no momento. Tente novamente mais tarde."

@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { readFile } from 'fs/promises';
-import { writeFileSync } from 'fs';
+import { writeFileSync, existsSync, statSync } from 'fs';
 
 const jsonfile = require('jsonfile');
 const file = '/tmp/data.json';
@@ -10,7 +10,6 @@ export class CampoMinadoH {
     private baseImagePath: string;
     private requestPath: string;
     private responsePath: string;
-    private games: Map<string, string> = new Map(); // Mapa para guardar jogos por chat/grupo
 
     constructor() {
         this.baseImagePath = process.env.BASE_IMAGE_PATH || '';
@@ -20,7 +19,7 @@ export class CampoMinadoH {
 
     private getImagePath(chatId: string): string {
         return `${this.baseImagePath}/${chatId}.png`;
-    }  
+    }
 
     private writeRequest(chatId: string, comando: string, coords: string[]) {
         // Cria objeto com os elementos já preenchidos
@@ -39,14 +38,45 @@ export class CampoMinadoH {
         new Promise(resolve => setTimeout(resolve, 1000));
     }
 
+    private async lerResponse() {
+        let lido = false;
+        let status = "";
+
+        // Aguarda até 2 segundos pela resposta
+        for (let i = 0; i < 20; i++) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            try {
+                const data = await jsonfile.readFile(this.responsePath);
+                lido = data.lido;
+                status = data.status;
+                if (lido) break;
+            } catch (error) {
+                continue;
+            }
+        }
+
+        if (lido) {
+            this.writeResponse();
+            return status;
+        } else {
+            return "SEM_RESPOSTA";
+        }
+    }
+
+    private writeResponse() {
+        const obj = {
+            lido: false,
+            status: ""
+        };
+
+        writeFileSync(this.responsePath, JSON.stringify(obj, null, 2));
+    }
+
     async novoJogo(chatId: string): Promise<{ success: boolean; message: string; imagePath?: string }> {
         try {
             const imagePath = this.getImagePath(chatId);
 
             this.writeRequest(chatId, "novo", [""]);
-
-            // Guarda o jogo atual para este chat
-            this.games.set(chatId, imagePath);
 
             return {
                 success: true,
@@ -80,31 +110,21 @@ export class CampoMinadoH {
             comando.push(match[1].toUpperCase() + match[2]);
         }
 
-        // Verifica se existe um jogo ativo para este chat
-        const imagePath = this.games.get(chatId);
-        if (!imagePath) {
-            return {
-                success: false,
-                message: "Nenhum jogo ativo! Use !novo para iniciar um jogo."
-            };
-        }
 
         try {
+            const imagePath = this.getImagePath(chatId);
+
             this.writeRequest(chatId, "jogar", comando);
 
-            const status = jsonfile.readFile(this.responsePath).status;
+            const status = await this.lerResponse();
 
             if (status == "GAMEOVER") {
-                // Remove o jogo quando termina
-                this.games.delete(chatId);
                 return {
                     success: true,
                     message: "GAME OVER! Voce atingiu uma mina!\nUse !novo para jogar novamente",
                     imagePath: imagePath
                 };
             } else if (status == "VITORIA") {
-                // Remove o jogo quando vence
-                this.games.delete(chatId);
                 return {
                     success: true,
                     message: "PARABENS! Voce venceu o Campo Minado!\nUse !novo para jogar novamente",
@@ -121,6 +141,16 @@ export class CampoMinadoH {
                     success: false,
                     message: "Jogada invalida!\nCelula ja revelada ou com bandeira."
                 };
+            } else if (status == "JOGO_INEXISTENTE") {
+                return {
+                    success: false,
+                    message: "Nenhum jogo ativo! Use !novo para iniciar um jogo."
+                };
+            } else if (status == "SEM_RESPOSTA") {
+                return {
+                    success: false,
+                    message: "Campo minado inativo/em manutenção."
+                }
             } else {
                 return {
                     success: true,
@@ -153,25 +183,30 @@ export class CampoMinadoH {
             comando.push(match[1].toUpperCase() + match[2]);
         }
 
-        // Verifica se existe um jogo ativo para este chat
-        const imagePath = this.games.get(chatId);
-        if (!imagePath) {
-            return {
-                success: false,
-                message: "Nenhum jogo ativo! Use !novo para iniciar um jogo."
-            };
-        }
-
 
         try {
+            const imagePath = this.getImagePath(chatId);
+
             this.writeRequest(chatId, "bandeira", comando);
 
-            if (jsonfile.readFile(this.responsePath).status == "BANDEIRA_ALTERADA") {
+            const status = await this.lerResponse();
+
+            if (status == "BANDEIRA_ALTERADA") {
                 return {
                     success: true,
                     message: `Bandeira colocada/removida!`,
-                    imagePath
+                    imagePath: imagePath
                 };
+            } else if (status == "JOGO_INEXISTENTE") {
+                return {
+                    success: false,
+                    message: "Nenhum jogo ativo! Use !novo para iniciar um jogo."
+                };
+            } else if (status == "SEM_RESPOSTA") {
+                return {
+                    success: false,
+                    message: "Campo minado inativo/em manutenção."
+                }
             } else {
                 return {
                     success: false,
@@ -186,48 +221,37 @@ export class CampoMinadoH {
         }
     }
 
-    async getImageBuffer(imagePath: string): Promise<Buffer | null> {
-        try {
-            return await readFile(imagePath);
-        } catch (error) {
-            console.error('Erro ao ler arquivo de imagem:', error);
-            return null;
-        }
-    }
-
     async verStatus(chatId: string): Promise<{ success: boolean; message: string; imagePath?: string }> {
         try {
-            // Verifica se existe um jogo ativo para este chat
-            const imagePath = this.games.get(chatId);
-            if (!imagePath) {
-                return {
-                    success: false,
-                    message: "Nenhum jogo ativo! Use !novo para iniciar um jogo."
-                };
-            }
+            const imagePath = this.getImagePath(chatId);
 
             this.writeRequest(chatId, "status", [""]);
 
-            const status = jsonfile.readFile(this.responsePath).status;
+            const status = await this.lerResponse();
 
             if (status == "STATUS_GAME_OVER") {
                 return {
                     success: true,
                     message: "GAME OVER\nUse !novo para jogar novamente",
-                    imagePath
+                    imagePath: imagePath
                 };
             } else if (status == "STATUS_VITORIA") {
                 return {
                     success: true,
                     message: "VITORIA!\nUse !novo para jogar novamente",
-                    imagePath
+                    imagePath: imagePath
                 };
             } else if (status == "STATUS_EM_ANDAMENTO") {
                 return {
                     success: true,
                     message: "JOGO EM ANDAMENTO\nContinue jogando!",
-                    imagePath
+                    imagePath: imagePath
                 };
+            } else if (status == "SEM_RESPOSTA") {
+                return {
+                    success: false,
+                    message: "Campo minado inativo/em manutenção."
+                }
             } else {
                 return {
                     success: false,
@@ -239,6 +263,30 @@ export class CampoMinadoH {
                 success: false,
                 message: `Erro ao ver status: ${error.message}`
             };
+        }
+    }
+
+    async getImageBuffer(imagePath: string): Promise<Buffer | null> {
+        try {
+            // Aguarda um pouco para garantir que o arquivo foi completamente escrito
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            // Verifica se o arquivo existe e é válido
+            if (!existsSync(imagePath)) {
+                console.error(`Arquivo de imagem não encontrado: ${imagePath}`);
+                return null;
+            }
+            
+            const stat = statSync(imagePath);
+            if (stat.size === 0) {
+                console.error(`Arquivo de imagem vazio: ${imagePath}`);
+                return null;
+            }
+            
+            return await readFile(imagePath);
+        } catch (error) {
+            console.error('Erro ao ler arquivo de imagem:', error);
+            return null;
         }
     }
 
