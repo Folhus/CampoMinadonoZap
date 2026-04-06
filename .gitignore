@@ -65,3 +65,7 @@ auth/
 # NOTE: avoid ignoring whole directories like `CampoMinado/` to prevent accidentally
 # hiding example files or documentation. If you intentionally want to ignore a full
 # directory, add an explicit rule and keep example negations afterwards.
+
+IMPLEMENTACAO.md
+
+STATUS.txt

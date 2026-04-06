@@ -23,6 +23,12 @@ public class CampoMinado implements Serializable {
     private boolean gameOver = false;
     private boolean vitoria = false;
 
+    // identificação do jogo
+    private String chatId;
+    
+    // caminho para a imagem
+    private String caminhoImagem;
+
     // Classe para guardar o estado de cada célula
     private static class CelulaEstado implements Serializable {
         private static final long serialVersionUID = 1L;
@@ -34,6 +40,7 @@ public class CampoMinado implements Serializable {
 
     // construtor
     public CampoMinado() {
+        inicializarCaminhoImagem();
         inicializarCelulas();
         setMinas();
         calcularMinasVizinhas();
@@ -42,6 +49,7 @@ public class CampoMinado implements Serializable {
     // Construtor para carregar jogo existente
     public CampoMinado(boolean[][] revelado, boolean[][] bandeiras, ArrayList<Point> minas) {
         this.minas = minas;
+        inicializarCaminhoImagem();
         inicializarCelulas();
 
         // Restaurar estados
@@ -59,6 +67,14 @@ public class CampoMinado implements Serializable {
         }
         calcularMinasVizinhas();
         verificarVitoria();
+    }
+
+    private void inicializarCaminhoImagem() {
+        String caminhoBase = ConfigEnv.getInstance().obter("BASE_IMAGE_PATH", 
+            "midia");
+        String nomeArquivo = (chatId != null && !chatId.isEmpty()) ? 
+            chatId + ".png" : "campo.png";
+        this.caminhoImagem = caminhoBase + File.separator + nomeArquivo;
     }
 
     private void inicializarCelulas() {
@@ -279,16 +295,15 @@ public class CampoMinado implements Serializable {
         }
 
         try {
-            File outputDir = new File("C:/Users/wilto/Desktop/Programa/Projetos/CampoMinadonoZap/CampoMinado/midia");
+            File outputDir = new File(new File(caminhoImagem).getParent());
             if (!outputDir.exists()) {
                 outputDir.mkdirs();
             }
-            File output = new File(outputDir, "campo.png");
+            File output = new File(caminhoImagem);
             ImageIO.write(image, "png", output);
             System.out.println("Imagem salva em: " + output.getAbsolutePath());
-        } catch (Exception e) {
+        } catch (IOException e) {
             System.err.println("Erro ao salvar a imagem: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
@@ -346,5 +361,18 @@ public class CampoMinado implements Serializable {
 
     public boolean isVitoria() {
         return vitoria;
+    }
+
+    public String getChatId() {
+        return chatId;
+    }
+
+    public void setChatId(String chatId) {
+        this.chatId = chatId;
+        inicializarCaminhoImagem();
+    }
+
+    public String getCaminhoImagem() {
+        return caminhoImagem;
     }
 }
