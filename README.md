@@ -40,14 +40,66 @@ CampoMinadonoZap/
 O projeto usa uma arquitetura de **duas camadas** que se comunicam via arquivo JSON:
 
 ```
-WhatsApp → Baileys (Node.js) → request.json → Java (Jogo.java) → responss.json → Node.js → WhatsApp
+WhatsApp → Baileys (Node.js) → request.json → Java (Jogo.java) → response.json → Node.js → WhatsApp
 ```
 
 1. O bot Node.js recebe o comando do usuário via WhatsApp
 2. Escreve o comando em `request.json`
 3. O processo Java lê o arquivo, executa a jogada e atualiza `response.json` com o resultado
-4. O Java também gera/atualiza a imagem `campo.png` do tabuleiro
+4. O Java também gera/atualiza a imagem `/midia/{chatId}.png` do tabuleiro
 5. O Node.js lê o resultado, carrega a imagem e responde ao usuário
+
+---
+
+## 🚀 Quick Start
+
+### Requisitos
+- Java 17+
+- Node.js 16+
+- npm
+
+### Compilar Java
+```powershell
+cd CampoMinado
+javac -cp lib/* -d bin src/*.java
+```
+
+### Executar Backend
+```powershell
+java -cp "bin;lib/*" Jogo
+```
+
+### Executar Bot Node.js
+```bash
+cd Bot
+npm install
+npm start
+```
+
+### Arquivo request.json (exemplo)
+```json
+{
+  "lido": false,
+  "jogo": "5584981881549",
+  "comando": {
+    "id": "novo",
+    "coordenadas": []
+  }
+}
+```
+
+---
+
+## ⚙️ Configuração
+
+Edite `CampoMinado/.env`:
+```properties
+BASE_IMAGE_PATH=./CampoMinado/midia
+REQUEST_PATH=./request.json
+RESPONSE_PATH=./response.json
+```
+
+---
 
 ---
 

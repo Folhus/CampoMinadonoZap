@@ -1,6 +1,13 @@
 # Node modules
 node_modules/
 
+# Java build
+bin/
+*.class
+*.jar
+target/
+.gradle/
+
 # Logs
 logs/
 *.log
@@ -22,32 +29,31 @@ out/
 # Editor directories and system files
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
 .DS_Store
 Thumbs.db
 
 # Sensitive project files and credentials
-# - ignore JSON credential/state files that live in auth/ (multiple copies exist)
 Bot/auth/*.json
 **/auth/*.json
-
-# Specific sensitive filenames sometimes present in workspace
 **/creds.json
 **/device-list-*.json
 **/lid-mapping*-reverse.json
-**/lid-mapping*.json
-**/app-state-sync-key-*.json
 **/app-state-sync-version-*.json
 
-# Saved game / binary state files (project-specific)
+# Generated game files (exclude from repo)
 *.ser
-*.save
+jogo_salvo.ser
+jogos_ativos.dat
 
-# Misc — ignore local build artifacts and OS/temp files
-*.tmp
-*.swp
-tmp/
-temp/
 
+# IDE
+.project
+.classpath
+.settings/
+*.iml
 # If you add other sensitive files, add them here (one per line)
 node_modules/
 auth/
@@ -69,3 +75,5 @@ auth/
 IMPLEMENTACAO.md
 
 STATUS.txt
+
+CampoMinado/midia/*.png
