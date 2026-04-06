@@ -43,8 +43,16 @@ public class Jogo {
 
     private void limparJson() {
         try {
+            Gson gson = new Gson();
+            Dados dadosLimpo = new Dados();
+            dadosLimpo.lido = true;
+            dadosLimpo.jogo = "";
+            dadosLimpo.comando = new Comando();
+            dadosLimpo.comando.id = "";
+            dadosLimpo.comando.coordenadas = new java.util.ArrayList<>();
+            
             FileWriter escritor = new FileWriter("request.json");
-            escritor.write("{lido: true,\r\n + jogo: chatId,\r\n + comando: {\r\n + id: %,\r\n + coordenadas: coords");
+            gson.toJson(dadosLimpo, escritor);
             escritor.close();
         } catch (IOException e) {
             System.err.println("Erro ao limpar request.json: " + e.getMessage());
