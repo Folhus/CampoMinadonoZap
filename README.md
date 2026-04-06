@@ -184,7 +184,7 @@ const RETRY_INTERVAL = 5000;          // intervalo entre tentativas (ms)
 
 ---
 
-## 🎉 Atualizações Recentes (Abril 2026)
+##  Atualizações Recentes (Abril 2026)
 
 ### Novos Arquivos
 - **GerenciadorJogos.java** - Map<chatId, CampoMinado> para múltiplos jogos simultâneos
@@ -196,10 +196,10 @@ const RETRY_INTERVAL = 5000;          // intervalo entre tentativas (ms)
 - **Jogo.java** - Integração com GerenciadorJogos e ConfigEnv
 
 ### Funcionalidades Implementadas
-✅ Múltiplos jogos simultâneos (cada chat tem seu próprio jogo)  
-✅ Persistência automática em `jogos_ativos.dat`  
-✅ Imagens nomeadas por chatId (ex: `5584981881549.png`)  
-✅ Configuração via `.env` com `BASE_IMAGE_PATH`  
+ Múltiplos jogos simultâneos (cada chat tem seu próprio jogo)  
+ Persistência automática em `jogos_ativos.dat`  
+ Imagens nomeadas por chatId (ex: `5584981881549.png`)  
+ Configuração via `.env` com `BASE_IMAGE_PATH`  
 
 ### Exemplo de Uso
 ```java
