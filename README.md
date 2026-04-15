@@ -264,6 +264,13 @@ jogo.gerarImagem(); // Gera: /midia/5584981881549.png
 
 ---
 
+## Autor
+
+Desenvolvido como projeto acadêmico de Programação Avançada na Universidade Estudual do Rio Grande do Norte (UERN) pelo estudante Wilton Carlos J. da C. Filho. Segue link do GitHub:
+https://github.com/Folhus
+
+---
+
 ## Licença
 
 MIT
